@@ -567,6 +567,13 @@ static void sender()
 
 try_again: // FIXME
 
+    if (stop_flag)
+    { // Ctrl-C pressed
+      if (verbose >= 1)
+        printf("Ctrl-C pressed; exit\n");
+      break;    
+    }
+
     // ожидать ответного пакета
     // read datagram from UDP socket (timeout)
     retv = sl_udp_read_to(sock, recv_buf, sizeof(recv_buf),
