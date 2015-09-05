@@ -6,7 +6,7 @@ Simple usage:
   * run on server side:
     ./pong -s
 
-  * run on client size:
+  * run on client side:
     ./pong hostname
 
   * for help run:
