@@ -91,9 +91,11 @@ static int sock; // UDP BSD socket
 static uint32_t send_buf[(MAX_SIZE + sizeof(uint32_t) - 1) / sizeof(uint32_t)];
 static uint32_t recv_buf[(MAX_SIZE + sizeof(uint32_t) - 1) / sizeof(uint32_t)];
 
-unsigned overrun = 0;
+unsigned overrun = 0; // FIXME
 
 unsigned lost_count = 0; // счетчик потерянных пакетов
+
+int stop_flag = 0; // set to 1 if Ctrl-C pressed
 //-----------------------------------------------------------------------------
 // parse command options
 static void parse_options(int argc, const char *argv[])
@@ -288,6 +290,13 @@ static void receiver()
   {
     uint32_t daytime; // текущее время приема пакета
 
+    if (stop_flag)
+    { // Ctrl-C pressed
+      if (verbose >= 1)
+        printf("Ctrl-C pressed; exit\n");
+      break;    
+    }
+
     // read datagram from UDP socket (timeout)
     retv = sl_udp_read_to(sock, recv_buf, sizeof(recv_buf),
                           &ip_addr, &port, timeout_ms);
@@ -394,7 +403,7 @@ static void receiver()
   } // while (1)
 }
 //-----------------------------------------------------------------------------
-// обработчик сигнала
+// обработчик сигнала таймера
 static void timer_handler(int signo, siginfo_t *si, void *context)
 {
   if (si->si_code == SI_TIMER)
@@ -408,6 +417,12 @@ static void timer_handler(int signo, siginfo_t *si, void *context)
     else
       overrun += retv;
   }
+}
+//-----------------------------------------------------------------------------
+// обработчик сигнала SIGINT (Ctrl-C)
+static void sigint_handler(int signo)
+{
+  stop_flag = 1;
 }
 //-----------------------------------------------------------------------------
 // функция передатчика (UDP client)
@@ -501,6 +516,13 @@ static void sender()
     uint32_t recv_time; // время приема ответного пакета
     unsigned ip_addr;   // IP address of echo sender
   
+    if (stop_flag)
+    { // Ctrl-C pressed
+      if (verbose >= 1)
+        printf("Ctrl-C pressed; exit\n");
+      break;    
+    }
+
     if (counter > 1)
     {
       if (deltatime_to_ms(get_daytime() - send_time) < interval_ms) 
@@ -645,6 +667,10 @@ try_again: // FIXME
 int main(int argc, const char *argv[])
 {
   uint32_t daytime = get_daytime();
+  
+  sigset_t mask;
+  struct sigevent sigev;
+  struct sigaction sa;
 
   // init socklib
   sl_init();
@@ -652,6 +678,16 @@ int main(int argc, const char *argv[])
   // разобрать опции командной строки
   parse_options(argc, argv);
   
+  // зарегистрировать обработчик сигнала SIGINT
+  if (verbose >= 3)
+    printf("Establishing handler for signal %d\n", SIGINT);
+  memset((void*) &sa, 0, sizeof(sa));
+  sa.sa_handler = sigint_handler;
+  sigemptyset(&sa.sa_mask);
+  //sa.sa_flags = 0;
+  if (sigaction(SIGINT, &sa, NULL) == -1)
+    err_exit("sigaction() failed; exit");
+
   // вывести на консоль начальное время
   if (verbose >= 2)
   {
