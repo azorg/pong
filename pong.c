@@ -567,6 +567,11 @@ static void sender()
 
 try_again: // FIXME
 
+    // ожидать ответного пакета
+    // read datagram from UDP socket (timeout)
+    retv = sl_udp_read_to(sock, recv_buf, sizeof(recv_buf),
+                          &ip_addr, &port, timeout_ms);
+    
     if (stop_flag)
     { // Ctrl-C pressed
       if (verbose >= 1)
@@ -574,11 +579,6 @@ try_again: // FIXME
       break;    
     }
 
-    // ожидать ответного пакета
-    // read datagram from UDP socket (timeout)
-    retv = sl_udp_read_to(sock, recv_buf, sizeof(recv_buf),
-                          &ip_addr, &port, timeout_ms);
-    
     if (retv == SL_TIMEOUT)
     {
       if (verbose >= 1)
