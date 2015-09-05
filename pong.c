@@ -335,7 +335,7 @@ static void receiver()
     if (ntohl(recv_buf[1]) != counter)
     {
       if (verbose >= 1)
-        printf("Some packet(s) lost (%u); correct counter\n",
+        printf("Some packet(s) may be lost (%u); correct counter\n",
                (unsigned) (ntohl(recv_buf[1]) - counter));
       counter = ntohl(recv_buf[1]);
       lost_count++;
