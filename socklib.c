@@ -289,12 +289,12 @@ int sl_select_ex(int fd, int msec, int sigmask)
     if (retv < 0)
     {
       if (errno == EINTR)
-        // interrupt by signal
+      { // interrupt by signal
         if (sigmask)
           continue;
         else
           return 0;
-          
+      }
       return SL_ERROR_POOL; // error
     }
     break;
@@ -336,11 +336,12 @@ int sl_select_ex(int fd, int msec, int sigmask)
     {
 #ifndef SL_WIN32
       if (errno == EINTR)
-        // interrupt by signal
+      { // interrupt by signal
         if (sigmask)
           continue;
         else
           return 0;
+      }
 #endif // SL_WIN32
       return SL_ERROR_SELECT; // error
     }
