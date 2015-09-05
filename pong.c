@@ -554,6 +554,7 @@ try_again: // FIXME
     {
       if (verbose >= 1)
         printf("Packet #%i lost by timeout; send next packet\n", counter);
+      lost_count++;
       continue;
     }
 
@@ -577,6 +578,7 @@ try_again: // FIXME
     {
       if (verbose >= 1 && retv != 0)
         printf("Size of UDP packet (%i bytes) is too short; continue\n", retv);
+      lost_count++;
       continue;
     }
 
@@ -586,6 +588,7 @@ try_again: // FIXME
       if (verbose >= 1)
         printf("Bad signature %08X; continue\n",
                (unsigned) ntohl(recv_buf[0]));
+        lost_count++;
         continue;
     }
     
