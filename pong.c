@@ -572,6 +572,9 @@ try_again: // FIXME
     retv = sl_udp_read_to(sock, recv_buf, sizeof(recv_buf),
                           &ip_addr, &port, timeout_ms);
     
+    // запомнить время приема пакета
+    recv_time = get_daytime();
+
     if (stop_flag)
     { // Ctrl-C pressed
       if (verbose >= 1)
@@ -584,6 +587,17 @@ try_again: // FIXME
       if (verbose >= 1)
         printf("Packet #%i lost by timeout; send next packet\n", counter);
       lost_count++;
+
+      // сохранить в статистике факт пропуска пакета (нулевая задержка)
+      if (data_stdout)
+      { // #counter #local_time #remote_time #delta_time
+        printf(
+          "%i %f %f %.6f\n",
+          counter,                   // счетчик пакетов
+          daytime_to_sec(recv_time), // время получения s]
+          daytime_to_sec(send_time), // время отправки [s]
+          0.);                       // туда-обратно [ms]
+      }
       continue;
     }
 
@@ -594,9 +608,6 @@ try_again: // FIXME
       exit(EXIT_FAILURE);
     }
     
-    // запомнить время приема пакета
-    recv_time = get_daytime();
-
     if (verbose >= 2)
       printf("Receive UDP packet from %s:%i, size=%i, time=%.3g ms\n",
              sl_inet_ntoa(ip_addr), port, retv,
