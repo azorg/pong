@@ -365,8 +365,6 @@ int sl_select(int fd, int msec)
 // fuse select wraper (always return 1)
 int sl_select_fuse(int fd, int msec)
 {
-  fd = fd;
-  msec = msec;
   return 1;
 }
 //----------------------------------------------------------------------------
