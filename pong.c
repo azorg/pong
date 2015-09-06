@@ -523,23 +523,17 @@ static void sender()
       break;    
     }
 
-    if (counter > 1)
-    {
-      if (deltatime_to_ms(get_daytime() - send_time) < interval_ms) 
-      {
-        // разюлокировать сигнал таймера
-        sigemptyset(&mask);
-        sigaddset(&mask, SIG);
-        if (sigprocmask(SIG_UNBLOCK, &mask, NULL) == -1)
-          err_exit("sigprocmask() failed; exit");
-   
-        pause(); // заснуть до прихода сигнала от таймера
-   
-        // заблокировать сигнал, чтобы он не прерывал select()
-        if (sigprocmask(SIG_BLOCK, &mask, NULL) == -1)
-          err_exit("sigprocmask() failed; exit");
-      }
-   } 
+    // разблокировать сигнал таймера
+    sigemptyset(&mask);
+    sigaddset(&mask, SIG);
+    if (sigprocmask(SIG_UNBLOCK, &mask, NULL) == -1)
+      err_exit("sigprocmask() failed; exit");
+
+    pause(); // заснуть до прихода сигнала от таймера
+
+    // заблокировать сигнал, чтобы он не прерывал select()
+    if (sigprocmask(SIG_BLOCK, &mask, NULL) == -1)
+      err_exit("sigprocmask() failed; exit");
 
     if (verbose >= 2)
       printf("Send UDP packet to %s:%i (size=%i)\n",
