@@ -444,7 +444,6 @@ static void sender()
   {
     printf("PONG run in sender (UDP client) mode:\n");
     printf("  hostname      = %s\n", hostname);
-    printf("  listen_ip     = %s\n", listen_ip);
     printf("  udp_port      = %i\n", udp_port);
     printf("  interval_ms   = %i\n", interval_ms);
     printf("  timeout_ms    = %i\n", timeout_ms);
