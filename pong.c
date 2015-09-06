@@ -60,7 +60,7 @@ static void help()
     "   -h|--help              show this help\n"
     "   -v|--verbose           verbose output\n"
     "  -vv|--more-verbose      more verbose output (or use -v twice)\n"
-    "   -d|--data              output packet statistic to stdout (no verbose)\n"              
+    "   -d|--data              output packet statistic to stdout (no verbose)\n"
     "   -s|--server            run in server mode\n"
     "   -l|--listen-ip ip      listen IP address (by default 0.0.0.0)\n"
     "   -p|--port port         UDP port (by default 7777)\n"
@@ -68,7 +68,7 @@ static void help()
     "   -t|--timeout ms        wait packet timeout [ms] (by default 1000)\n"
     "   -z|--packet-size size  UDP packet size [bytes>=24] (by default 1000)\n"
     "   -c|--packet-count cnt  packet counter (by default 0 - infinity)\n"
-    "By default remote hostname is 127.0.0.1 for loop debug.\n"); 
+    "By default remote hostname is 127.0.0.1 for loop debug.\n");
   exit(EXIT_SUCCESS);
 }
 //-----------------------------------------------------------------------------
@@ -282,7 +282,7 @@ static void receiver()
             sl_error_str(sock));
     exit(EXIT_FAILURE);
   }
-  
+
   // ждать пакеты и отвечать
   recv_time = (uint32_t) -1;
   delta_time = 0;
@@ -293,8 +293,8 @@ static void receiver()
     if (stop_flag)
     { // Ctrl-C pressed
       if (verbose >= 1)
-        printf("Ctrl-C pressed; exit\n");
-      break;    
+        printf("\nCtrl-C pressed; exit\n");
+      break;
     }
 
     // read datagram from UDP socket (timeout)
@@ -312,12 +312,12 @@ static void receiver()
               sl_error_str(retv));
       exit(EXIT_FAILURE);
     }
-    
+
     // запомнить время приема пакета
     daytime = get_daytime();
-    
+
     if (verbose >= 2)
-      printf("Receive UDP packet #%u from %s:%i (size=%i)\n",
+      printf("Receive UDP packet #%u from %s:%i size=%i\n",
              counter, sl_inet_ntoa(ip_addr), port, retv);
 
     // проверить число слов (должно быть не менее 3-х)
@@ -336,7 +336,7 @@ static void receiver()
                (unsigned) ntohl(recv_buf[0]), counter);
         continue;
     }
-    
+
     // запомнить размер принятого ответа (ответить пакетом такого же размера)
     ans_size = retv;
 
@@ -349,20 +349,27 @@ static void receiver()
       counter = ntohl(recv_buf[1]);
       lost_count++;
     }
-  
+
     // время с момента приема предыдущего пакета
     if (recv_time != (uint32_t) -1)
-      delta_time = (int32_t) daytime - recv_time;    
+      delta_time = (int32_t) daytime - recv_time;
     recv_time = daytime;
-    
+
     // отправить ответный пакет
     send_buf[0] = htonl(PONG_MAGIC);
     send_buf[1] = htonl(counter);
     send_buf[2] = htonl(get_daytime());
 
     if (verbose >= 2)
-      printf("Send UDP packet #%u to %s:%i (size=%i)\n",
+      printf("Send UDP packet #%u to %s:%i size=%i\n",
              counter, sl_inet_ntoa(ip_addr), port, ans_size);
+
+    if (stop_flag)
+    { // Ctrl-C pressed
+      if (verbose >= 1)
+        printf("\nCtrl-C pressed; exit\n");
+      break;
+    }
 
     counter++;
 
@@ -387,7 +394,7 @@ static void receiver()
       printf(
         "%i %f %f %.6f\n",
         counter,                             // счетчик пакетов
-        daytime_to_sec(daytime),             // время приема [s] 
+        daytime_to_sec(daytime),             // время приема [s]
         daytime_to_sec(ntohl(recv_buf[2])),  // время отправки [s]
         deltatime_to_sec(delta_time) * 1e3); // интервал между пакетами [ms]
     }
@@ -410,7 +417,7 @@ static void timer_handler(int signo, siginfo_t *si, void *context)
   {
     int retv;
     timer_t *tidp = si->si_value.sival_ptr;
-    
+
     retv = timer_getoverrun(*tidp);
     if (retv == -1)
       err_exit("timer_getoverrun() failed; exit");
@@ -470,7 +477,7 @@ static void sender()
     exit(EXIT_FAILURE);
   }
 
-  // зарегистрировать обработчик сигнала
+  // зарегистрировать обработчик сигнала таймера
   if (verbose >= 3)
     printf("Establishing handler for signal %d\n", SIG);
   memset((void*) &sa, 0, sizeof(sa));
@@ -479,7 +486,7 @@ static void sender()
   sa.sa_flags = SA_SIGINFO | SA_RESTART;
   if (sigaction(SIG, &sa, NULL) == -1)
     err_exit("sigaction() failed; exit");
-  
+
   // разблокировать сигнал (хотя он и так по умолчанию не блокирован)
   if (verbose >= 3)
     printf("Unblocking signal %d\n", SIG);
@@ -487,7 +494,7 @@ static void sender()
   sigaddset(&mask, SIG);
   if (sigprocmask(SIG_UNBLOCK, &mask, NULL) == -1)
     err_exit("sigprocmask() failed; exit");
-  
+
   // создать таймер
   memset((void*) &sigev, 0, sizeof(sigev));
   sigev.sigev_notify = SIGEV_SIGNAL; // SIGEV_NONE SIGEV_SIGNAL SIGEV_THREAD...
@@ -507,19 +514,19 @@ static void sender()
   ival.it_interval = ival.it_value;
   if (timer_settime(timerid, 0, &ival, NULL) == -1)
     err_exit("timer_settime() failed; exit");
-  
+
   // отправлять пакеты и ждать ответы
   for (counter = 1;; counter++)
   {
     uint32_t send_time; // время отправки пакета
     uint32_t recv_time; // время приема ответного пакета
     unsigned ip_addr;   // IP address of echo sender
-  
+
     if (stop_flag)
     { // Ctrl-C pressed
       if (verbose >= 1)
-        printf("Ctrl-C pressed; exit\n");
-      break;    
+        printf("\nCtrl-C pressed; exit\n");
+      break;
     }
 
     // разблокировать сигнал таймера
@@ -535,12 +542,19 @@ static void sender()
       err_exit("sigprocmask() failed; exit");
 
     if (verbose >= 2)
-      printf("Send UDP packet to %s:%i (size=%i)\n",
+      printf("Send UDP packet to %s:%i size=%i\n",
              hostname, udp_port, packet_size);
 
     send_buf[0] = htonl(PING_MAGIC);
     send_buf[1] = htonl(counter);
     send_buf[2] = htonl(send_time = get_daytime());
+
+    if (stop_flag)
+    { // Ctrl-C pressed
+      if (verbose >= 1)
+        printf("\nCtrl-C pressed; exit\n");
+      break;
+    }
 
     // send datagram to peer via UDP to ip numeric
     retv = sl_udp_sendto(sock, host_ip, udp_port,
@@ -560,19 +574,26 @@ static void sender()
 
 try_again: // FIXME
 
+    if (stop_flag)
+    { // Ctrl-C pressed
+      if (verbose >= 1)
+        printf("\nCtrl-C pressed; exit\n");
+      break;
+    }
+
     // ожидать ответного пакета
     // read datagram from UDP socket (timeout)
     retv = sl_udp_read_to(sock, recv_buf, sizeof(recv_buf),
                           &ip_addr, &port, timeout_ms);
-    
+
     // запомнить время приема пакета
     recv_time = get_daytime();
 
     if (stop_flag)
     { // Ctrl-C pressed
       if (verbose >= 1)
-        printf("Ctrl-C pressed; exit\n");
-      break;    
+        printf("\nCtrl-C pressed; exit\n");
+      break;
     }
 
     if (retv == SL_TIMEOUT)
@@ -600,12 +621,12 @@ try_again: // FIXME
               sl_error_str(retv));
       exit(EXIT_FAILURE);
     }
-    
+
     if (verbose >= 2)
-      printf("Receive UDP packet from %s:%i, size=%i, time=%.3g ms\n",
+      printf("Receive UDP packet from %s:%i size=%i time=%.3g ms\n",
              sl_inet_ntoa(ip_addr), port, retv,
              deltatime_to_sec(recv_time - send_time) * 1e3);
-    
+
     // проверить число слов (должно быть не менее 3-х)
     if (retv < 3*sizeof(uint32_t))
     {
@@ -624,7 +645,7 @@ try_again: // FIXME
         lost_count++;
         continue;
     }
-    
+
     // проверить второе слово (счетчик пакетов)
     if (ntohl(recv_buf[1]) != counter)
     {
@@ -644,7 +665,7 @@ try_again: // FIXME
         lost_count++;
       }
     }
-  
+
     // вывод "аля ping"
     if (verbose == 1)
       printf(
@@ -652,7 +673,7 @@ try_again: // FIXME
         //counter, retv, sl_inet_ntoa(ip_addr), port,
         counter, retv, hostname, udp_port,
         deltatime_to_sec(recv_time - send_time) * 1e3);
-    
+
     // сохранить статистику
     if (data_stdout)
     { // #counter #local_time #remote_time #delta_time
@@ -678,7 +699,7 @@ try_again: // FIXME
 int main(int argc, const char *argv[])
 {
   uint32_t daytime = get_daytime();
-  
+
   sigset_t mask;
   struct sigevent sigev;
   struct sigaction sa;
@@ -688,16 +709,20 @@ int main(int argc, const char *argv[])
 
   // разобрать опции командной строки
   parse_options(argc, argv);
-  
+
   // зарегистрировать обработчик сигнала SIGINT
   if (verbose >= 3)
     printf("Establishing handler for signal %d\n", SIGINT);
+#if 0
   memset((void*) &sa, 0, sizeof(sa));
   sa.sa_handler = sigint_handler;
   sigemptyset(&sa.sa_mask);
   //sa.sa_flags = 0;
   if (sigaction(SIGINT, &sa, NULL) == -1)
     err_exit("sigaction() failed; exit");
+#else
+  signal(SIGINT, sigint_handler); // old school ;-)
+#endif
 
   // вывести на консоль начальное время
   if (verbose >= 2)
@@ -711,7 +736,7 @@ int main(int argc, const char *argv[])
     receiver();
   else
     sender();
-      
+
   if (verbose >= 1)
     printf("Lost packet count = %u\n", lost_count);
 
