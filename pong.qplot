@@ -20,14 +20,14 @@ pickerAlwaysOn = true
 #-----------------------------------------------------------------------------
 [1]
 file="data.txt"
-xCol=1
+xCol=0
 yCol=3
 color=blue
 #-----------------------------------------------------------------------------
 [2]
 legend="delay [ms]"
 file="data.txt"
-xCol=1
+xCol=0
 yCol=3
 curve=dots
 color=red
