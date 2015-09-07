@@ -737,7 +737,8 @@ int main(int argc, const char *argv[])
     fprintf(fo, "--- UDP pong server %s:%i statisticts ---\n",
             listen_ip, udp_port);
     fprintf(fo,
-            "%u packet(s) received; %u packet(s) may be lost (%g%%)\n",
+            "%u packet(s) received last session; "
+            "%u packet(s) may be lost (%g%%)\n",
             counter, lost_count,
             ((double) lost_count) / ((double) counter) * 100.);
   }

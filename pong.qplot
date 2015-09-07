@@ -3,7 +3,7 @@ title  = "pong test"
 #-----------------------------------------------------------------------------
 [area]
 zoom           = true
-legend         = true
+#legend         = true
 grid           = true
 gridXMin       = true
 gridYMin       = true
