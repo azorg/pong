@@ -96,6 +96,8 @@ unsigned overrun = 0; // FIXME
 unsigned lost_count = 0; // счетчик потерянных пакетов
 
 int stop_flag = 0; // set to 1 if Ctrl-C pressed
+
+uint32_t counter = 1; // packet send/recive counter
 //-----------------------------------------------------------------------------
 // parse command options
 static void parse_options(int argc, const char *argv[])
@@ -258,7 +260,6 @@ static void print_daytime(uint32_t daytime)
 static void receiver()
 {
   int retv;
-  uint32_t counter;   // packet counter
   unsigned ip_addr;   // IP address of sender
   uint32_t recv_time; // время приема предыдущего пакета
   int32_t delta_time; // время между приходом соседних пакетов
@@ -286,14 +287,14 @@ static void receiver()
   // ждать пакеты и отвечать
   recv_time = (uint32_t) -1;
   delta_time = 0;
-  for (counter = 1 ;;)
+  for (;;)
   {
     uint32_t daytime; // текущее время приема пакета
 
     if (stop_flag)
     { // Ctrl-C pressed
-      if (verbose >= 1)
-        printf("\nCtrl-C pressed; exit\n");
+      fprintf(stderr, "\nCtrl-C pressed; exit\n");
+      counter--;
       break;
     }
 
@@ -366,12 +367,9 @@ static void receiver()
 
     if (stop_flag)
     { // Ctrl-C pressed
-      if (verbose >= 1)
-        printf("\nCtrl-C pressed; exit\n");
+      fprintf(stderr, "\nCtrl-C pressed; exit\n");
       break;
     }
-
-    counter++;
 
     // send datagram to peer via UDP to ip numeric
     retv = sl_udp_sendto(sock, ip_addr, port, send_buf, ans_size, 0);
@@ -400,14 +398,15 @@ static void receiver()
     }
 
     // проверить счетчик принятых пакетов
-    if (packet_count)
-      if (--packet_count == 0)
-      {
-        if (verbose >= 1)
-          printf("Limit of packet counter; exit\n");
-        break;
-      }
-  } // while (1)
+    if (packet_count && counter >= packet_count)
+    {
+      if (verbose >= 1)
+        printf("Limit of packet counter; exit\n");
+      break;
+    }
+    
+    counter++;
+  } // for(;;)
 }
 //-----------------------------------------------------------------------------
 // обработчик сигнала таймера
@@ -438,7 +437,6 @@ static void sender()
   int retv;
   unsigned host_ip;   // IP адрес сервера
   int port;           // порт сервера
-  uint32_t counter;   // packet counter
 
   struct timespec ts, tm, st;
   sigset_t mask;
@@ -516,7 +514,7 @@ static void sender()
     err_exit("timer_settime() failed; exit");
 
   // отправлять пакеты и ждать ответы
-  for (counter = 1;; counter++)
+  for (;; counter++)
   {
     uint32_t send_time; // время отправки пакета
     uint32_t recv_time; // время приема ответного пакета
@@ -524,8 +522,17 @@ static void sender()
 
     if (stop_flag)
     { // Ctrl-C pressed
+      fprintf(stderr, "\nCtrl-C pressed; exit\n");
+      counter--;
+      break;
+    }
+
+    // проверить счетчик отправленных пакетов
+    if (packet_count && counter > packet_count)
+    {
       if (verbose >= 1)
-        printf("\nCtrl-C pressed; exit\n");
+        printf("Limit of packet counter; exit\n");
+      counter--;
       break;
     }
 
@@ -551,8 +558,8 @@ static void sender()
 
     if (stop_flag)
     { // Ctrl-C pressed
-      if (verbose >= 1)
-        printf("\nCtrl-C pressed; exit\n");
+      fprintf(stderr, "\nCtrl-C pressed; exit\n");
+      counter--;
       break;
     }
 
@@ -576,8 +583,7 @@ try_again: // FIXME
 
     if (stop_flag)
     { // Ctrl-C pressed
-      if (verbose >= 1)
-        printf("\nCtrl-C pressed; exit\n");
+      fprintf(stderr, "\nCtrl-C pressed; exit\n");
       break;
     }
 
@@ -591,8 +597,7 @@ try_again: // FIXME
 
     if (stop_flag)
     { // Ctrl-C pressed
-      if (verbose >= 1)
-        printf("\nCtrl-C pressed; exit\n");
+      fprintf(stderr, "\nCtrl-C pressed; exit\n");
       break;
     }
 
@@ -642,8 +647,7 @@ try_again: // FIXME
       if (verbose >= 1)
         printf("Bad signature %08X; continue\n",
                (unsigned) ntohl(recv_buf[0]));
-        lost_count++;
-        continue;
+        goto try_again;
     }
 
     // проверить второе слово (счетчик пакетов)
@@ -684,15 +688,6 @@ try_again: // FIXME
         daytime_to_sec(ntohl(recv_buf[2])),             // время отправки [s]
         deltatime_to_sec(recv_time - send_time) * 1e3); // туда-обратно [ms]
     }
-
-    // проверить счетчик отправленных пакетов
-    if (packet_count)
-      if (--packet_count == 0)
-      {
-        if (verbose >= 1)
-          printf("Limit of packet counter; exit\n");
-        break;
-      }
   } // for(;; counter++)
 }
 //-----------------------------------------------------------------------------
@@ -703,6 +698,7 @@ int main(int argc, const char *argv[])
   sigset_t mask;
   struct sigevent sigev;
   struct sigaction sa;
+  FILE *fo = stdout; // statstics output (stdout/stderr)
 
   // init socklib
   sl_init();
@@ -732,13 +728,29 @@ int main(int argc, const char *argv[])
     printf("\n");
   }
 
-  if (echo_mode)
-    receiver();
-  else
-    sender();
+  if (data_stdout)
+    fo = stderr;
 
-  if (verbose >= 1)
-    printf("Lost packet count = %u\n", lost_count);
+  if (echo_mode)
+  {
+    receiver();
+    fprintf(fo, "--- UDP pong server %s:%i statisticts ---\n",
+            listen_ip, udp_port);
+    fprintf(fo,
+            "%u packet(s) received; %u packet(s) may be lost (%g%%)\n",
+            counter, lost_count,
+            ((double) lost_count) / ((double) counter) * 100.);
+  }
+  else
+  {
+    sender();
+    fprintf(fo, "--- UDP pong client statistics to %s:%i ---\n",
+            hostname, udp_port);
+    fprintf(fo,
+            "%u packet(s) send; %u echo packet(s) lost (%g%%)\n",
+            counter, lost_count,
+            ((double) lost_count) / ((double) counter) * 100.);
+  }
 
   // term socklib
   sl_term();
