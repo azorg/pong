@@ -5,7 +5,7 @@
  * Кодировка: UTF-8
  * Автор: Александр Гриньков <a.grinkov@gmail.com>
  * (C) 2015 ОАО "НИИ приборостроения им. В.В. Тихомирова"
- * Дата модификации: 2015.09.05
+ * Дата модификации: 2015.09.09
  */
 
 //-----------------------------------------------------------------------------
@@ -17,6 +17,7 @@
 #include <string.h>   // memset()
 #include <signal.h>   // sigaction(),  sigemptyset(), sigprocmask()
 #include <time.h>     // clock_gettime(), clock_getres(), time_t, ...
+#include <sched.h>    // sched_setscheduler(), SCHED_FIFO, ...
 //-----------------------------------------------------------------------------
 #include "socklib.h"
 //#include "gtime.h"
@@ -68,6 +69,7 @@ static void help()
     "   -t|--timeout ms        wait packet timeout [ms] (by default 1000)\n"
     "   -z|--packet-size size  UDP packet size [bytes>=24] (by default 1000)\n"
     "   -c|--packet-count cnt  packet counter (by default 0 - infinity)\n"
+    "   -r|--real-time         real time mode (root required)\n"
     "By default remote hostname is 127.0.0.1 for loop debug.\n");
   exit(EXIT_SUCCESS);
 }
@@ -98,6 +100,8 @@ unsigned lost_count = 0; // счетчик потерянных пакетов
 int stop_flag = 0; // set to 1 if Ctrl-C pressed
 
 uint32_t counter = 1; // packet send/recive counter
+
+int realtime = 0; // real time mode
 //-----------------------------------------------------------------------------
 // parse command options
 static void parse_options(int argc, const char *argv[])
@@ -179,6 +183,11 @@ static void parse_options(int argc, const char *argv[])
         packet_count = atoi(argv[i]);
         if (packet_count < 0) usage();
       }
+      else if (!strcmp(argv[i], "-r") ||
+               !strcmp(argv[i], "--real-time"))
+      { // real time mode
+        realtime = 1;
+      }
       else
         usage();
     }
@@ -187,6 +196,17 @@ static void parse_options(int argc, const char *argv[])
       hostname = argv[i];
     }
   } // for
+}
+//-----------------------------------------------------------------------------
+// set the process to real-time privs
+static void set_realtime_priority()
+{
+  struct sched_param schp;
+  memset(&schp, 0, sizeof(schp));
+  schp.sched_priority = sched_get_priority_max(SCHED_FIFO);
+
+  if (sched_setscheduler(0, SCHED_FIFO, &schp) != 0)
+    err_exit("sched_setscheduler(SCHED_FIFO)");
 }
 //-----------------------------------------------------------------------------
 // вернуть время суток (цена младшего разряда 24*60*60/2**32)
@@ -273,6 +293,7 @@ static void receiver()
     printf("  udp_port      = %i\n", udp_port);
     printf("  packet_count  = %i\n", packet_count);
     printf("  verbose level = %i\n", verbose);
+    printf("  real time     = %s\n", realtime ? "yes" : "no");
   }
 
   // make server UDP socket
@@ -455,6 +476,7 @@ static void sender()
     printf("  packet_size   = %i\n", packet_size);
     printf("  packet_count  = %i\n", packet_count);
     printf("  verbose level = %i\n", verbose);
+    printf("  real time     = %s\n", realtime ? "yes" : "no");
   }
 
   // get remote host IP by name
@@ -705,6 +727,10 @@ int main(int argc, const char *argv[])
 
   // разобрать опции командной строки
   parse_options(argc, argv);
+
+  // установить "real-time" приоритет
+  if (realtime)
+    set_realtime_priority();
 
   // зарегистрировать обработчик сигнала SIGINT
   if (verbose >= 3)
