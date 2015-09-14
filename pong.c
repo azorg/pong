@@ -425,7 +425,7 @@ static void receiver()
         printf("Limit of packet counter; exit\n");
       break;
     }
-    
+
     counter++;
   } // for(;;)
 }
@@ -787,4 +787,3 @@ int main(int argc, const char *argv[])
 //-----------------------------------------------------------------------------
 
 /*** end of "pong.c" ***/
-
