@@ -148,12 +148,12 @@ int sl_make_server_socket_ex(const char *listen_ip, int port, int backlog)
 
   // bind(...)
   memset((void*) &saddr, (int) 0, (size_t) sizeof(saddr)); // clear address
-  
+
   if (inet_aton(listen_ip, &iaddr) == 0)
     return SL_ERROR_ADDR;
-  
+
   memcpy((void*) &saddr.sin_addr, (const void*) &iaddr, (size_t) sizeof(iaddr));
-  
+
   saddr.sin_port = htons((unsigned short) port);
   saddr.sin_family = AF_INET;
   if (bind(sock, (struct sockaddr *) &saddr, sizeof(saddr)) != 0)
@@ -207,7 +207,7 @@ int sl_connect_to_server(const char *host, int port)
   }
   saddr.sin_port = htons((unsigned short) port);
   saddr.sin_family = AF_INET;
- 
+
   if (connect(sock, (struct sockaddr *) &saddr, sizeof(saddr)) != 0)
     return SL_ERROR_CONNECT;
 
@@ -521,13 +521,13 @@ int sl_udp_make_server_socket_ex(const char *listen_ip, int port)
 
   // bind(...)
   memset(&saddr, 0, sizeof(saddr));
-  
+
   if (inet_aton(listen_ip, &iaddr) == 0)
     return SL_ERROR_ADDR;
-  
+
   memcpy((void*) &saddr.sin_addr, (const void*) &iaddr, (size_t) sizeof(iaddr));
   //saddr.sin_addr.s_addr = htonl(INADDR_ANY);
-  
+
   saddr.sin_port = htons((unsigned short) port);
   saddr.sin_family = AF_INET;
 
@@ -589,19 +589,19 @@ int sl_udp_read(int sock, void *buf, int size, unsigned *ipaddr, int *port)
 
       if (ipaddr != (unsigned*) NULL)
         *ipaddr = (unsigned) - 1;
- 
+
       if (port != (int*) NULL)
         *port = -1;
- 
+
       return SL_ERROR_READ;
     }
-  
+
     if (ipaddr != (unsigned*) NULL)
       *ipaddr = (unsigned) (((struct sockaddr_in*) &client)->sin_addr.s_addr);
- 
+
     if (port != (int*) NULL)
       *port = (int) ntohs(((struct sockaddr_in*) &client)->sin_port);
-  
+
     return ret;
   } // while (1)
 }
@@ -643,19 +643,19 @@ int sl_udp_read_to(int sock, void *buf, int size,
 
       if (ipaddr != (unsigned*) NULL)
         *ipaddr = (unsigned) - 1;
-    
+
       if (port != (int*) NULL)
         *port = -1;
 
       return SL_ERROR_READ;
-    }  
+    }
 
     if (ipaddr != (unsigned*) NULL)
       *ipaddr = (unsigned) (((struct sockaddr_in*) &client)->sin_addr.s_addr);
 
     if (port != (int*) NULL)
       *port = (int) ntohs(((struct sockaddr_in*) &client)->sin_port);
- 
+
     return ret;
   } // while (1)
 }
@@ -707,7 +707,7 @@ int sl_udp_sendto_addr(int sock, const char *host, int port,
 
   ip_addr = inet_addr(host);
   if (ip_addr == INADDR_NONE)
-    return SL_ERROR_RESOLVE;  
+    return SL_ERROR_RESOLVE;
 
   memset(&to_addr, 0, sizeof(to_addr));
 
@@ -799,4 +799,3 @@ unsigned short sl_ntohs(unsigned short netshort)
 }
 //----------------------------------------------------------------------------
 /*** end of "socklib.c" file ***/
-

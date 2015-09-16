@@ -246,11 +246,11 @@ static double deltatime_to_sec(int32_t delta_daytime)
 }
 //-----------------------------------------------------------------------------
 // перевести разницу суточного времени в мс
-static int deltatime_to_ms(int32_t delta_daytime)
-{
-  double t = (double) delta_daytime;
-  return (int) (t * ((24.*60.*60.*1000.) / 4294967296.));
-}
+//static int deltatime_to_ms(int32_t delta_daytime)
+//{
+//double t = (double) delta_daytime;
+//  return (int) (t * ((24.*60.*60.*1000.) / 4294967296.));
+//}
 //-----------------------------------------------------------------------------
 // преобразовать время из double [sec] в `struct timespec`
 static struct timespec double_to_ts(double t)
@@ -459,7 +459,6 @@ static void sender()
   unsigned host_ip;   // IP адрес сервера
   int port;           // порт сервера
 
-  struct timespec ts, tm, st;
   sigset_t mask;
   struct sigevent sigev;
   struct sigaction sa;
@@ -716,10 +715,6 @@ try_again: // FIXME
 int main(int argc, const char *argv[])
 {
   uint32_t daytime = get_daytime();
-
-  sigset_t mask;
-  struct sigevent sigev;
-  struct sigaction sa;
   FILE *fo = stdout; // statstics output (stdout/stderr)
 
   // init socklib
