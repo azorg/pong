@@ -341,7 +341,7 @@ static void receiver()
     if (verbose >= 2)
       printf("Receive UDP packet #%u from %s:%i size=%i\n",
              counter, sl_inet_ntoa(ip_addr), port, retv);
-
+		
     // проверить число слов (должно быть не менее 3-х)
     if (retv < 3*sizeof(uint32_t))
     {
@@ -425,7 +425,7 @@ static void receiver()
         printf("Limit of packet counter; exit\n");
       break;
     }
-    
+
     counter++;
   } // for(;;)
 }
@@ -782,4 +782,3 @@ int main(int argc, const char *argv[])
 //-----------------------------------------------------------------------------
 
 /*** end of "pong.c" ***/
-

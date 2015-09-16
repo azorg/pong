@@ -1,14 +1,18 @@
-Simple network test "UDP Ping-Pong"
------------------------------------
+# Simple network test "UDP Ping-Pong"
 
-Simple usage:
+## Intallation
+`$ make`
 
-  * run on server side:
-    ./pong -s
+`$ sudo make install`
 
-  * run on client side:
-    ./pong hostname
+## Simple usage
 
-  * for help run:
-    ./pong -h
+### Run on server side:
+`$ pong -s`
+
+### Run on client side:
+`$ pong hostname`
+
+### Help about more options:
+`$ pong -h`
 
