@@ -55,7 +55,7 @@ static void help()
 {
   printf(
     "This is simple network tester based on 'UDP Ping-Pong'.\n"
-    "Run in echo mode:    pong -e [-options]\n"
+    "Run in server mode:  pong -s [-options]\n"
     "Run in sender mode:  pong    [-options] hostname\n"
     "Options:\n"
     "   -h|--help              show this help\n"
