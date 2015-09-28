@@ -1,9 +1,8 @@
+
 /*
  * Simple wrappers to work with UNIX-like TCP/IP sockets
  * Version: 0.13
  * File: "socklib.h"
- * (C) 2008-2015 Alex  Grinkov     <a.grinkov@gmail.com>
- * (C) 2008-2009 Anton Shmigirilov <shmigirilov@gmail.com>
  * Last update: 2015.09.05
  */
 
