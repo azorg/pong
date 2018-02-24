@@ -1,3 +1,5 @@
+2018.02.24:
+  * fix indent space and fix new warnings
 
 2015.09.09:
   + добавлен режим "приоритет реального времени" (SCHED_FIFO)

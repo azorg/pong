@@ -354,7 +354,7 @@ static void receiver()
       if (verbose >= 1)
         printf("Bad signature %08X in packet #%u; continue\n",
                (unsigned) ntohl(recv_buf[0]), counter);
-        continue;
+      continue;
     }
 
     // запомнить размер принятого ответа (ответить пакетом такого же размера)
@@ -666,7 +666,7 @@ try_again: // FIXME
       if (verbose >= 1)
         printf("Bad signature %08X; continue\n",
                (unsigned) ntohl(recv_buf[0]));
-        goto try_again;
+      goto try_again;
     }
 
     // проверить второе слово (счетчик пакетов)
